@@ -1,4 +1,5 @@
 import { writeFileSync, mkdirSync } from 'fs';
+import { Resend } from 'resend';
 
 // Tier assignment by domain
 const TIER_MAP = {
@@ -180,6 +181,59 @@ function deduplicate(items) {
   });
 }
 
+async function sendDailyEmail(data) {
+  if (!process.env.RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not set, skipping email.');
+    return;
+  }
+  if (!process.env.RESEND_AUDIENCE_ID) {
+    console.log('RESEND_AUDIENCE_ID not set, skipping email.');
+    return;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const tierColors = { 1: '#0e8044', 2: '#2563eb', 3: '#b45309', 4: '#d94e3d', 5: '#b91c1c' };
+  const tierLabels = { 1: 'T1 官方', 2: 'T2 主流媒体', 3: 'T3 行业媒体', 4: 'T4 自媒体', 5: 'T5 未证实' };
+
+  const itemsHtml = data.items.slice(0, 20).map(item => `
+    <tr>
+      <td style="padding:14px 0;border-bottom:1px solid #e8e5e0">
+        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;background:${tierColors[item.sourceTier]}15;color:${tierColors[item.sourceTier]};margin-bottom:6px">
+          ${tierLabels[item.sourceTier]} · ${item.sourceName}
+        </span>
+        <div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:4px">${item.title}</div>
+        <div style="font-size:13px;color:#888">${item.crossPlatformCount} 平台 · ${item.summary || ''}</div>
+        ${item.sourceTier >= 4 ? `<div style="font-size:12px;color:${tierColors[item.sourceTier]};margin-top:4px">⚠ 未经权威渠道证实，请交叉验证</div>` : ''}
+      </td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="max-width:600px;margin:0 auto;padding:20px;font-family:Georgia,serif;background:#faf9f7;color:#2c2c2c">
+  <h1 style="font-size:24px;color:#1a1a1a;margin-bottom:4px">Daily Briefing</h1>
+  <p style="font-size:13px;color:#888;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e8e5e0">
+    ${data.date} · ${data.platformCount} 个平台 · ${data.itemCount} 条热点
+  </p>
+  <table style="width:100%">${itemsHtml}</table>
+  <p style="font-size:11px;color:#aaa;margin-top:24px;padding-top:16px;border-top:1px solid #e8e5e0">
+    每日 08:00 (北京时间) 自动推送 · <a href="%unsubscribe_url%" style="color:#888">退订</a>
+  </p>
+</body></html>`;
+
+  try {
+    await resend.emails.send({
+      from: 'Daily Briefing <briefing@resend.dev>',
+      to: [process.env.EMAIL_RECIPIENTS || 'subscriber@example.com'],
+      subject: `Daily Briefing · ${data.date} · ${data.itemCount} 条热点`,
+      html,
+    });
+    console.log('Email sent.');
+  } catch (e) {
+    console.error('Email send failed:', e.message);
+  }
+}
+
 async function main() {
   console.log('Starting aggregation...');
   const date = new Date().toISOString().slice(0, 10);
@@ -235,6 +289,9 @@ async function main() {
   writeFileSync(`data/${date}.json`, JSON.stringify(output, null, 2));
   writeFileSync('data/latest.json', JSON.stringify(output, null, 2));
   console.log(`Saved data/${date}.json (${deduped.length} items)`);
+
+  // Send email
+  await sendDailyEmail(output);
 
   console.log('Done.');
 }
