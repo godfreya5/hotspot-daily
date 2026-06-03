@@ -124,4 +124,121 @@ async function fetchTrendRadar() {
   }
 }
 
+function extractKeywords(title) {
+  if (!title) return [];
+  const cleaned = title
+    .replace(/[，。！？、；：""''「」【】《》（）\s]+/g, ' ')
+    .replace(/[^\w一-鿿\s]/g, '')
+    .trim()
+    .toLowerCase();
+  return cleaned.split(/\s+/).filter(w => w.length >= 2);
+}
+
+function keywordOverlap(a, b) {
+  const ka = new Set(a);
+  const kb = new Set(b);
+  return [...ka].filter(k => kb.has(k)).length;
+}
+
+function deduplicate(items) {
+  const keywords = items.map(i => extractKeywords(i.title));
+  const clusters = [];
+  const used = new Set();
+
+  for (let i = 0; i < items.length; i++) {
+    if (used.has(i)) continue;
+    const cluster = [items[i]];
+    used.add(i);
+    for (let j = i + 1; j < items.length; j++) {
+      if (used.has(j)) continue;
+      if (keywordOverlap(keywords[i], keywords[j]) >= 3) {
+        cluster.push(items[j]);
+        used.add(j);
+      }
+    }
+    clusters.push(cluster);
+  }
+
+  return clusters.map(cluster => {
+    if (cluster.length === 1) return cluster[0];
+    cluster.sort((a, b) => (a.sourceTier || 5) - (b.sourceTier || 5));
+    const primary = { ...cluster[0] };
+    primary.crossPlatformCount = [...new Set(cluster.map(c => c.platform))].length;
+    primary.crossPlatformUrls = {};
+    cluster.forEach(c => {
+      if (c.platform && c.url) primary.crossPlatformUrls[c.platform] = c.url;
+    });
+    primary.traceChain = cluster.map(c => ({
+      url: c.url,
+      sourceName: c.sourceName,
+      tier: c.sourceTier,
+      platform: c.platform,
+      publishedAt: c.publishedAt,
+      role: c === cluster[0] ? 'primary' : 'related',
+    }));
+    return primary;
+  });
+}
+
+async function main() {
+  console.log('Starting aggregation...');
+  const date = new Date().toISOString().slice(0, 10);
+
+  const [trendRadar, hn, v2ex] = await Promise.all([
+    fetchTrendRadar(),
+    fetchHN(30),
+    fetchV2EX(),
+  ]);
+
+  const allItems = [...trendRadar, ...hn, ...v2ex];
+  console.log(`Fetched ${allItems.length} items (TrendRadar: ${trendRadar.length}, HN: ${hn.length}, V2EX: ${v2ex.length})`);
+
+  // Assign first-pass tiers
+  allItems.forEach(item => {
+    const domain = getDomain(item.url);
+    item.sourceTier = assignTier(item.sourceName, domain, item.platform, 1);
+  });
+
+  // Deduplicate
+  const deduped = deduplicate(allItems);
+  console.log(`After dedup: ${deduped.length} unique items`);
+
+  // Re-assign tiers with cross-platform data
+  deduped.forEach(item => {
+    const domain = getDomain(item.url);
+    item.sourceTier = assignTier(item.sourceName, domain, item.platform, item.crossPlatformCount);
+  });
+
+  // Sort by tier (low = high credibility first), then by recency
+  deduped.sort((a, b) => {
+    if (a.sourceTier !== b.sourceTier) return (a.sourceTier || 5) - (b.sourceTier || 5);
+    return new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0);
+  });
+
+  // Save
+  const output = {
+    date,
+    generatedAt: new Date().toISOString(),
+    platformCount: [...new Set(deduped.map(i => i.platform))].length,
+    itemCount: deduped.length,
+    tierDistribution: {
+      t1: deduped.filter(i => i.sourceTier === 1).length,
+      t2: deduped.filter(i => i.sourceTier === 2).length,
+      t3: deduped.filter(i => i.sourceTier === 3).length,
+      t4: deduped.filter(i => i.sourceTier === 4).length,
+      t5: deduped.filter(i => i.sourceTier === 5).length,
+    },
+    items: deduped,
+  };
+
+  mkdirSync('data', { recursive: true });
+  writeFileSync(`data/${date}.json`, JSON.stringify(output, null, 2));
+  writeFileSync('data/latest.json', JSON.stringify(output, null, 2));
+  console.log(`Saved data/${date}.json (${deduped.length} items)`);
+
+  console.log('Done.');
+}
+
+main().catch(e => { console.error(e); process.exit(1); });
+
 export { fetchHN, fetchV2EX, fetchTrendRadar, normalizeItem, assignTier, getDomain, PLATFORM_DEFAULTS };
