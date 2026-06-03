@@ -1,0 +1,12 @@
+{
+  "name": "hotspot-daily",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "aggregate": "node scripts/aggregate.mjs"
+  },
+  "dependencies": {
+    "resend": "^4.0.0"
+  }
+}
