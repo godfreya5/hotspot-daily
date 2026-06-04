@@ -25,7 +25,7 @@ function getDomain(url) {
 function assignTier(sourceName, domain, platform, crossPlatformCount) {
   if (domain) {
     for (const [knownDomain, tier] of Object.entries(TIER_MAP)) {
-      if (domain.includes(knownDomain)) return tier;
+      if (domain === knownDomain || domain.endsWith('.' + knownDomain)) return tier;
     }
   }
   if (PLATFORM_DEFAULTS[platform] !== undefined) {
@@ -55,37 +55,51 @@ function normalizeItem(raw) {
 }
 
 async function fetchHN(limit = 30) {
-  const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
-  const ids = (await res.json()).slice(0, limit);
-  const items = [];
-  for (const id of ids) {
-    const r = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-    const d = await r.json();
-    items.push(normalizeItem({
-      id: `hn-${d.id}`,
-      title: d.title,
-      url: d.url || `https://news.ycombinator.com/item?id=${d.id}`,
-      sourceName: d.by,
-      platform: 'hackernews',
-      publishedAt: d.time ? new Date(d.time * 1000).toISOString() : null,
-      summary: `${d.score} points, ${d.descendants || 0} comments`,
-    }));
+  try {
+    const res = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+    if (!res.ok) throw new Error(`HN topstories returned ${res.status}`);
+    const ids = (await res.json()).slice(0, limit);
+    const items = [];
+    for (const id of ids) {
+      const r = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (!d || !d.id) continue;
+      items.push(normalizeItem({
+        id: `hn-${d.id}`,
+        title: d.title,
+        url: d.url || `https://news.ycombinator.com/item?id=${d.id}`,
+        sourceName: d.by,
+        platform: 'hackernews',
+        publishedAt: d.time ? new Date(d.time * 1000).toISOString() : null,
+        summary: `${d.score} points, ${d.descendants || 0} comments`,
+      }));
+    }
+    return items;
+  } catch (e) {
+    console.error('HN fetch failed:', e.message);
+    return [];
   }
-  return items;
 }
 
 async function fetchV2EX() {
-  const res = await fetch('https://www.v2ex.com/api/topics/hot.json');
-  const data = await res.json();
-  return data.map(d => normalizeItem({
-    id: `v2ex-${d.id}`,
-    title: d.title,
-    url: d.url,
-    sourceName: d.member?.username || 'V2EX',
-    platform: 'v2ex',
-    publishedAt: new Date(d.created * 1000).toISOString(),
-    summary: `${d.replies} replies · ${d.node?.title || ''}`,
-  }));
+  try {
+    const res = await fetch('https://www.v2ex.com/api/topics/hot.json');
+    if (!res.ok) throw new Error(`V2EX returned ${res.status}`);
+    const data = await res.json();
+    return data.map(d => normalizeItem({
+      id: `v2ex-${d.id}`,
+      title: d.title,
+      url: d.url,
+      sourceName: d.member?.username || 'V2EX',
+      platform: 'v2ex',
+      publishedAt: new Date(d.created * 1000).toISOString(),
+      summary: `${d.replies} replies · ${d.node?.title || ''}`,
+    }));
+  } catch (e) {
+    console.error('V2EX fetch failed:', e.message);
+    return [];
+  }
 }
 
 async function fetchTrendRadar() {
@@ -105,8 +119,12 @@ async function fetchTrendRadar() {
       body: JSON.stringify(body),
     });
     const json = await res.json();
-    const data = json.result?.content?.[0]?.text
-      ? JSON.parse(json.result.content[0].text)
+    let rawText = null;
+    if (json.result?.content && json.result.content.length > 0 && json.result.content[0].text) {
+      rawText = json.result.content[0].text;
+    }
+    const data = rawText
+      ? JSON.parse(rawText)
       : (json.result?.data || []);
     const items = Array.isArray(data) ? data : (data.items || data.data || []);
     return items.map(d => normalizeItem({
@@ -208,6 +226,8 @@ async function sendDailyEmail(data) {
     </tr>
   `).join('');
 
+  const unsubscribeUrl = process.env.UNSUBSCRIBE_URL || '#';
+
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
 <body style="max-width:600px;margin:0 auto;padding:20px;font-family:Georgia,serif;background:#faf9f7;color:#2c2c2c">
@@ -217,14 +237,14 @@ async function sendDailyEmail(data) {
   </p>
   <table style="width:100%">${itemsHtml}</table>
   <p style="font-size:11px;color:#aaa;margin-top:24px;padding-top:16px;border-top:1px solid #e8e5e0">
-    每日 08:00 (北京时间) 自动推送 · <a href="%unsubscribe_url%" style="color:#888">退订</a>
+    每日 08:00 (北京时间) 自动推送 · <a href="${unsubscribeUrl}" style="color:#888">退订</a>
   </p>
 </body></html>`;
 
   try {
     await resend.emails.send({
       from: 'Daily Briefing <briefing@resend.dev>',
-      to: [process.env.EMAIL_RECIPIENTS || 'subscriber@example.com'],
+      to: (process.env.EMAIL_RECIPIENTS || 'subscriber@example.com').split(',').map(s => s.trim()).filter(Boolean),
       subject: `Daily Briefing · ${data.date} · ${data.itemCount} 条热点`,
       html,
     });
