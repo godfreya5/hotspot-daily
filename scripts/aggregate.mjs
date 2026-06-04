@@ -1,13 +1,32 @@
 import { writeFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { Resend } from 'resend';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '..');
 
 // Tier assignment by domain
 const TIER_MAP = {
-  'xinhuanet.com': 1, 'reuters.com': 1, 'apnews.com': 1, 'bbc.com': 1,
-  'people.com.cn': 1, 'gov.cn': 1,
-  'thepaper.cn': 2, 'nytimes.com': 2, 'wsj.com': 2, 'techcrunch.com': 2,
-  'caixin.com': 2, 'theverge.com': 2, 'bloomberg.com': 2,
-  '36kr.com': 3, 'theinformation.com': 3, 'arstechnica.com': 3,
+  // T1: official / wire services / top journals
+  'xinhuanet.com': 1, 'reuters.com': 1, 'apnews.com': 1, 'bbc.com': 1, 'bbc.co.uk': 1,
+  'people.com.cn': 1, 'gov.cn': 1, 'npr.org': 1, 'economist.com': 1, 'ft.com': 1,
+  'nature.com': 1, 'science.org': 1, 'pnas.org': 1, 'who.int': 1,
+  'theguardian.com': 1, 'washingtonpost.com': 1, 'cbsnews.com': 1, 'nbcnews.com': 1,
+  // T2: major media / established tech press
+  'thepaper.cn': 2, 'nytimes.com': 2, 'wsj.com': 2, 'bloomberg.com': 2,
+  'caixin.com': 2, 'techcrunch.com': 2, 'theverge.com': 2, 'arstechnica.com': 2,
+  'wired.com': 2, 'engadget.com': 2, 'cnet.com': 2, 'zdnet.com': 2,
+  'forbes.com': 2, 'fortune.com': 2, 'axios.com': 2, 'politico.com': 2,
+  'theatlantic.com': 2, 'newyorker.com': 2, 'theinformation.com': 2,
+  'cnbc.com': 2, 'abcnews.go.com': 2, 'usatoday.com': 2, 'latimes.com': 2,
+  'independent.co.uk': 2, 'telegraph.co.uk': 2, 'scmp.com': 2,
+  'theregister.com': 2, 'eurekalert.org': 2,
+  // T3: industry blogs / niche outlets
+  '36kr.com': 3, 'medium.com': 3, 'dev.to': 3, 'hackernoon.com': 3,
+  'thenextweb.com': 3, 'gizmodo.com': 3, 'techradar.com': 3, 'tomshardware.com': 3,
+  'venturebeat.com': 3, 'protocol.com': 3, 'thehackernews.com': 3,
+  'bleepingcomputer.com': 3, 'schneier.com': 3, 'stratechery.com': 3,
 };
 
 // Category keyword matching (checked against title + summary)
@@ -44,7 +63,7 @@ const PLATFORM_DEFAULTS = {
   thepaper: 2, cls: 2, wallstreetcn: 2, ifeng: 2,
   weibo: 4, zhihu: 4, douyin: 4, bilibili: 4, tieba: 5,
   toutiao: 4, baidu: null,
-  hackernews: 4, v2ex: 4,
+  hackernews: null, v2ex: 4,
 };
 
 function getDomain(url) {
@@ -57,8 +76,9 @@ function assignTier(sourceName, domain, platform, crossPlatformCount) {
       if (domain === knownDomain || domain.endsWith('.' + knownDomain)) return tier;
     }
   }
-  if (PLATFORM_DEFAULTS[platform] !== undefined) {
-    return PLATFORM_DEFAULTS[platform];
+  const pd = PLATFORM_DEFAULTS[platform];
+  if (pd !== undefined && pd !== null) {
+    return pd;
   }
   if (crossPlatformCount >= 3) return 3;
   return 4;
@@ -343,9 +363,9 @@ async function main() {
     items: deduped,
   };
 
-  mkdirSync('data', { recursive: true });
-  writeFileSync(`data/${date}.json`, JSON.stringify(output, null, 2));
-  writeFileSync('data/latest.json', JSON.stringify(output, null, 2));
+  mkdirSync(resolve(ROOT, 'data'), { recursive: true });
+  writeFileSync(resolve(ROOT, `data/${date}.json`), JSON.stringify(output, null, 2));
+  writeFileSync(resolve(ROOT, 'data/latest.json'), JSON.stringify(output, null, 2));
   console.log(`Saved data/${date}.json (${deduped.length} items)`);
 
   // Send email
