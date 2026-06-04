@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Briefing · 全网热点信源分析</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #faf9f7;
+    color: #2c2c2c;
+    line-height: 1.6;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  .header { margin-bottom: 40px; }
+  .header h1 { font-size: 32px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
+  .header .date-line { font-size: 14px; color: #999; margin-top: 6px; font-family: system-ui, -apple-system, sans-serif; }
+  .subscribe { display: flex; gap: 8px; margin-top: 16px; }
+  .subscribe input {
+    flex: 1; padding: 10px 14px; border: 1px solid #d4d0c8; border-radius: 6px;
+    font-size: 14px; font-family: system-ui, sans-serif; background: #fff; color: #2c2c2c;
+  }
+  .subscribe input:focus { outline: none; border-color: #8b7e6a; }
+  .subscribe button {
+    padding: 10px 20px; background: #2c2c2c; color: #faf9f7; border: none; border-radius: 6px;
+    font-size: 14px; cursor: pointer; font-family: system-ui, sans-serif; white-space: nowrap;
+  }
+  .subscribe button:hover { background: #1a1a1a; }
+  .subscribe .msg { font-size: 12px; color: #888; margin-top: 4px; font-family: system-ui, sans-serif; }
+
+  .section-title {
+    font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 16px;
+    padding-bottom: 10px; border-bottom: 2px solid #e8e5e0;
+  }
+  .section { margin-bottom: 48px; }
+
+  .item {
+    padding: 16px 0; border-bottom: 1px solid #e8e5e0;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .item:hover { background: #f5f3ef; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 4px; }
+  .item .tier-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 12px; font-family: system-ui, sans-serif; font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .item .title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; line-height: 1.4; }
+  .item .meta { font-size: 13px; color: #888; font-family: system-ui, sans-serif; margin-bottom: 4px; }
+  .item .summary { font-size: 15px; color: #555; line-height: 1.5; }
+  .item .warning { font-size: 13px; color: #d94e3d; margin-top: 6px; font-family: system-ui, sans-serif; }
+
+  .trace { display: none; margin-top: 14px; padding: 16px; background: #fff; border: 1px solid #e8e5e0; border-radius: 8px; }
+  .trace.open { display: block; }
+  .trace-node { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+  .trace-node .arrow { color: #ccc; font-size: 14px; min-width: 20px; text-align: center; }
+  .trace-node .info { flex: 1; }
+  .trace-node .info .name { font-size: 14px; font-weight: 600; color: #2c2c2c; }
+  .trace-node .info .time { font-size: 12px; color: #999; }
+  .trace-assessment { font-size: 14px; color: #2c2c2c; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e8e5e0; }
+  .trace-assessment .verdict { font-weight: 700; margin-bottom: 4px; }
+
+  .compare { margin-bottom: 48px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .compare-card { padding: 14px; background: #fff; border: 1px solid #e8e5e0; border-radius: 8px; }
+  .compare-card .label { font-size: 12px; color: #999; font-family: system-ui, sans-serif; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .compare-card .headline { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+
+  .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e8e5e0; font-size: 12px; color: #bbb; font-family: system-ui, sans-serif; text-align: center; }
+  .footer a { color: #888; }
+
+  .loading { text-align: center; padding: 60px 0; color: #999; font-family: system-ui, sans-serif; }
+  .empty { text-align: center; padding: 60px 0; color: #999; }
+  .expand-toggle { font-size: 13px; color: #888; font-family: system-ui, sans-serif; margin-top: 8px; display: inline-block; cursor: pointer; }
+  .expand-toggle:hover { color: #555; }
+
+  @media (max-width: 500px) {
+    body { padding: 24px 16px 60px; }
+    .header h1 { font-size: 24px; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .subscribe { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+  <div class="footer">
+    Daily Briefing · 全网热点信源分析 ·
+    <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
