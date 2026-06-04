@@ -40,7 +40,7 @@
   }
 
   function renderTierBadge(tier, sourceName) {
-    var color = tierColors[tier] || '#888';
+    var color = tierColors[tier] || '#6d6d6d';
     return '<span class="tier-badge" style="background:' + color + '15;color:' + color + '">' +
       esc(tierLabels[tier] || 'T' + tier) + ' · ' + esc(sourceName) + '</span>';
   }
@@ -48,10 +48,10 @@
   function renderTraceChain(item) {
     var chain = item.traceChain || [];
     if (chain.length <= 1) {
-      return '<div style="font-size:13px;color:#999">暂无追溯链数据（单一信源）</div>';
+      return '<div style="font-size:13px;color:#767676">暂无追溯链数据（单一信源）</div>';
     }
     var nodes = chain.map(function(node, i) {
-      var color = tierColors[node.tier] || '#888';
+      var color = tierColors[node.tier] || '#6d6d6d';
       return '<div class="trace-node">' +
         '<div class="arrow">' + (i === 0 ? '📡' : '↓') + '</div>' +
         '<div class="info">' +
@@ -87,7 +87,7 @@
     var urls = item.crossPlatformUrls || {};
     var keys = Object.keys(urls);
     for (var i = 0; i < keys.length; i++) {
-      crossLinks += ' <a href="' + escUrl(urls[keys[i]]) + '" target="_blank" rel="noopener" style="color:#888;font-size:12px;margin-right:8px">' + esc(keys[i]) + '</a>';
+      crossLinks += ' <a href="' + escUrl(urls[keys[i]]) + '" target="_blank" rel="noopener" style="color:#6d6d6d;font-size:12px;margin-right:8px">' + esc(keys[i]) + '</a>';
     }
 
     var warning = '';
@@ -160,13 +160,13 @@
       '<h2 class="section-title">📅 昨日回顾</h2>' +
       '<div class="compare-grid">' +
         '<div class="compare-card"><div class="label">🔥 持续热点</div>' +
-          (sustained.length ? sustained.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#999">无</div>') +
+          (sustained.length ? sustained.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#767676">无</div>') +
         '</div>' +
         '<div class="compare-card"><div class="label">🆕 今日新增</div>' +
-          (newcomers.length ? newcomers.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#999">无</div>') +
+          (newcomers.length ? newcomers.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#767676">无</div>') +
         '</div>' +
         '<div class="compare-card"><div class="label">⬇ 昨日退出</div>' +
-          (dropped.length ? dropped.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#999">无</div>') +
+          (dropped.length ? dropped.map(function(i) { return '<div class="headline">' + esc(i.title.slice(0, 30)) + '...</div>'; }).join('') : '<div style="font-size:13px;color:#767676">无</div>') +
         '</div>' +
       '</div>' +
     '</section>';
@@ -233,7 +233,7 @@
       .catch(function() {
         app.innerHTML = '<div class="empty">' +
           '<p>今日数据尚未生成。</p>' +
-          '<p style="font-size:14px;color:#bbb">每日 08:00 (北京时间) 自动更新。</p>' +
+          '<p style="font-size:14px;color:#8a8a8a">每日 08:00 (北京时间) 自动更新。</p>' +
           '</div>';
       });
   }
