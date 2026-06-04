@@ -1,0 +1,52 @@
+name: Daily Aggregation
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 08:00 Beijing time = 00:00 UTC
+  workflow_dispatch:       # Manual trigger for testing
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    services:
+      trendradar:
+        image: wantcat/trendradar-mcp
+        ports:
+          - 3333:3333
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+
+      - name: Wait for TrendRadar MCP
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3333 > /dev/null 2>&1; then
+              echo "TrendRadar ready"
+              break
+            fi
+            echo "Waiting for TrendRadar... ($i)"
+            sleep 2
+          done
+
+      - name: Run aggregation
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+          EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+        run: node scripts/aggregate.mjs
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "data: daily aggregation $(date +%Y-%m-%d)"
+          git push
