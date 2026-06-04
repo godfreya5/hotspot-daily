@@ -98,9 +98,11 @@
     }
 
     var safeId = esc(String(item.id || Math.random())).replace(/\s/g, '_');
+    var catLabel = item.categoryLabel || '';
+    var catBadge = catLabel ? '<span class="cat-badge" data-cat="' + esc(item.category || '') + '">' + esc(catLabel) + '</span>' : '';
 
-    return '<article class="item">' +
-      renderTierBadge(item.sourceTier, item.sourceName) +
+    return '<article class="item" data-category="' + esc(item.category || 'other') + '">' +
+      renderTierBadge(item.sourceTier, item.sourceName) + ' ' + catBadge +
       '<h3 class="title">' + esc(item.title) + '</h3>' +
       '<div class="meta">' + crossPlatform + ' · ' + esc(fmtTime(item.publishedAt)) + crossLinks + '</div>' +
       (item.summary ? '<p class="summary">' + esc(item.summary) + '</p>' : '') +
@@ -233,10 +235,50 @@
       .catch(function() {
         app.innerHTML = '<div class="empty">' +
           '<p>今日数据尚未生成。</p>' +
-          '<p style="font-size:14px;color:#8a8a8a">每日 08:00 (北京时间) 自动更新。</p>' +
+          '<p style="font-size:14px;color:#8a8a8a">每 6 小时自动更新 (北京时间 02:00 / 08:00 / 14:00 / 20:00)。</p>' +
           '</div>';
       });
   }
+
+  function renderFilterBar(categories) {
+    var html = '<nav class="filter-bar"><button class="filter-chip active" data-filter="all">全部</button>';
+    for (var i = 0; i < categories.length; i++) {
+      var cat = categories[i];
+      html += '<button class="filter-chip" data-filter="' + esc(cat.key) + '">' + esc(cat.label) + ' (' + cat.count + ')</button>';
+    }
+    html += '</nav>';
+    return html;
+  }
+
+  // Category filter click handler
+  document.addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    var filter = chip.getAttribute('data-filter');
+
+    // Update active chip
+    var allChips = document.querySelectorAll('.filter-chip');
+    for (var i = 0; i < allChips.length; i++) {
+      allChips[i].classList.toggle('active', allChips[i] === chip);
+    }
+
+    // Show/hide sections and items
+    var sections = document.querySelectorAll('.section[data-category-section]');
+    for (var s = 0; s < sections.length; s++) {
+      var section = sections[s];
+      var items = section.querySelectorAll('.item');
+      var visible = 0;
+      for (var t = 0; t < items.length; t++) {
+        var match = filter === 'all' || items[t].getAttribute('data-category') === filter;
+        items[t].style.display = match ? '' : 'none';
+        if (match) visible++;
+      }
+      // Hide section if no visible items and it's a tier section
+      if (section.hasAttribute('data-category-section')) {
+        section.style.display = visible > 0 ? '' : 'none';
+      }
+    }
+  });
 
   function render(data, yesterdayData) {
     var app = document.getElementById('app');
@@ -249,30 +291,42 @@
       if (platforms.indexOf(i.platform) === -1) platforms.push(i.platform);
     });
 
+    // Build category list for filter bar
+    var catMap = {};
+    data.items.forEach(function(i) {
+      var key = i.category || 'other';
+      var label = i.categoryLabel || '其他';
+      if (!catMap[key]) catMap[key] = { key: key, label: label, count: 0 };
+      catMap[key].count++;
+    });
+    var categories = Object.values(catMap).sort(function(a, b) { return b.count - a.count; });
+
     var html = '';
 
     html += '<header class="header">';
     html += '<h1>Daily Briefing · 全网热点信源分析</h1>';
-    html += '<div class="date-line">' + esc(fmtDateChinese(data.date)) + ' · ' + platforms.length + ' 个平台 · 更新于 08:00 (北京时间)</div>';
+    html += '<div class="date-line">' + esc(fmtDateChinese(data.date)) + ' · ' + platforms.length + ' 个平台 · ' + data.itemCount + ' 条热点</div>';
     html += renderSubscribe();
     html += '</header>';
 
+    html += renderFilterBar(categories);
+
     if (highCred.length) {
-      html += '<section class="section">';
+      html += '<section class="section" data-category-section>';
       html += '<h2 class="section-title">🟢 高可信度 · ' + highCred.length + ' 条</h2>';
       highCred.forEach(function(item) { html += renderItem(item); });
       html += '</section>';
     }
 
     if (mediumCred.length) {
-      html += '<section class="section">';
+      html += '<section class="section" data-category-section>';
       html += '<h2 class="section-title">🟡 行业媒体 · ' + mediumCred.length + ' 条</h2>';
       mediumCred.forEach(function(item) { html += renderItem(item); });
       html += '</section>';
     }
 
     if (lowCred.length) {
-      html += '<section class="section">';
+      html += '<section class="section" data-category-section>';
       html += '<h2 class="section-title">🟠 待验证 · ' + lowCred.length + ' 条</h2>';
       lowCred.forEach(function(item) { html += renderItem(item); });
       html += '</section>';

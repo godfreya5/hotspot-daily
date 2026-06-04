@@ -2,7 +2,7 @@ name: Daily Aggregation
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 08:00 Beijing time = 00:00 UTC
+    - cron: '0 */6 * * *'  # 每 6 小时 (02:00, 08:00, 14:00, 20:00 BJT)
   workflow_dispatch:       # Manual trigger for testing
 
 jobs:

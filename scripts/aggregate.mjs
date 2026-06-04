@@ -10,6 +10,35 @@ const TIER_MAP = {
   '36kr.com': 3, 'theinformation.com': 3, 'arstechnica.com': 3,
 };
 
+// Category keyword matching (checked against title + summary)
+const CATEGORY_KEYWORDS = {
+  'ai-tech': { label: 'AI/科技', keywords: ['ai', 'artificial intelligence', '人工智能', '大模型', 'llm', 'gpt', 'chatgpt', 'openai', 'claude', 'gemini', 'deepseek', '芯片', '半导体', 'chip', 'gpu', 'nvidia', '英伟达', '量子', 'quantum', '航天', 'spacex', '卫星', 'rocket', '机器人', 'robot', '自动驾驶', '5g', '6g', '华为', 'apple', '苹果', 'google', '谷歌', 'microsoft', '微软', 'meta', 'tesla', '特斯拉', '大语言模型', 'agi', '智能体', 'agent'] },
+  'finance': { label: '财经', keywords: ['股市', 'a股', '港股', '美股', '股票', 'stock', '经济', 'economy', 'gdp', '贸易', 'tariff', '关税', '房地产', '房价', '基金', 'fund', '加密货币', 'bitcoin', 'crypto', '比特币', '央行', '利率', 'ipo', '上市', '融资', 'funding', '收购', 'acquisition', '财报', 'earnings'] },
+  'world': { label: '国际', keywords: ['美国', '俄罗斯', '乌克兰', '北约', 'nato', '欧盟', '日本', '韩国', '中东', '以色列', '伊朗', '朝鲜', '联合国', 'un', '外交', '白宫', 'trump', 'biden', 'putin', '战争', 'war', '军事'] },
+  'sports': { label: '体育', keywords: ['足球', '篮球', 'nba', '世界杯', 'world cup', '奥运会', 'olympics', '欧冠', '英超', '西甲', '法网', '温网', 'f1', '马拉松', '决赛', 'championship'] },
+  'entertainment': { label: '娱乐', keywords: ['明星', '电影', '电视剧', '综艺', '音乐', '演唱会', '票房', 'box office', '奥斯卡', 'oscar', 'netflix', 'disney', '迪士尼', '好莱坞', 'hollywood'] },
+  'health-science': { label: '健康/科学', keywords: ['疫苗', '疫情', '病毒', '疾病', '研究', 'nature', 'science', '论文', 'paper', '科研', '医学', 'cancer', 'climate', '气候', '环保', 'energy', '能源'] },
+  'society': { label: '社会', keywords: ['法律', '法院', '政策', '教育', '高考', '交通', '事故', '灾害', '地震', '火灾', '洪水', '安全', '隐私', 'privacy', '监管', 'regulation'] },
+  'gaming': { label: '游戏', keywords: ['游戏', '电竞', '手游', 'steam', 'ps5', 'xbox', '任天堂', 'nintendo', '原神', '王者荣耀', 'lol', 'esport', 'gaming'] },
+  'auto': { label: '汽车', keywords: ['电动车', '新能源', 'ev', '比亚迪', 'byd', '理想', '蔚来', 'nio', '小鹏', '小米汽车', '特斯拉', 'cybertruck', '电池', 'battery', '充电', 'charging'] },
+};
+
+function classifyCategory(title, summary) {
+  const text = ((title || '') + ' ' + (summary || '')).toLowerCase();
+  let bestCat = null;
+  let bestScore = 0;
+  for (const [cat, def] of Object.entries(CATEGORY_KEYWORDS)) {
+    let score = 0;
+    for (const kw of def.keywords) {
+      if (text.includes(kw)) score += kw.length >= 4 ? 2 : 1;
+    }
+    if (score > bestScore) { bestScore = score; bestCat = cat; }
+  }
+  return bestScore > 0
+    ? { category: bestCat, categoryLabel: CATEGORY_KEYWORDS[bestCat].label }
+    : { category: 'other', categoryLabel: '其他' };
+}
+
 // Platform default tiers
 const PLATFORM_DEFAULTS = {
   thepaper: 2, cls: 2, wallstreetcn: 2, ifeng: 2,
@@ -36,20 +65,25 @@ function assignTier(sourceName, domain, platform, crossPlatformCount) {
 }
 
 function normalizeItem(raw) {
+  const title = (raw.title || '').slice(0, 80);
+  const summary = raw.summary || null;
+  const { category, categoryLabel } = classifyCategory(title, summary);
   return {
     id: raw.id || Math.random().toString(36).slice(2, 10),
-    title: (raw.title || '').slice(0, 80),
+    title,
     title_en: raw.title_en || null,
     url: raw.url || '',
     sourceName: raw.sourceName || raw.by || '',
     sourceTier: null,
     platform: raw.platform,
+    category,
+    categoryLabel,
     crossPlatformCount: 1,
     crossPlatformUrls: {},
     publishedAt: raw.publishedAt || raw.time
       ? new Date((raw.publishedAt || raw.time * 1000)).toISOString()
       : null,
-    summary: raw.summary || null,
+    summary,
     traceChain: [],
   };
 }
@@ -302,6 +336,10 @@ async function main() {
       t4: deduped.filter(i => i.sourceTier === 4).length,
       t5: deduped.filter(i => i.sourceTier === 5).length,
     },
+    categoryDistribution: deduped.reduce((acc, i) => {
+      acc[i.category] = (acc[i.category] || 0) + 1;
+      return acc;
+    }, {}),
     items: deduped,
   };
 

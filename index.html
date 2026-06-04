@@ -38,6 +38,20 @@
   }
   .section { margin-bottom: 48px; }
 
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .filter-chip {
+    padding: 6px 14px; border: 1px solid #d4d0c8; border-radius: 20px;
+    background: #fff; color: #555; font-size: 13px; font-family: system-ui, sans-serif;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-chip:hover { border-color: #8b7e6a; color: #2c2c2c; }
+  .filter-chip.active { background: #2c2c2c; color: #faf9f7; border-color: #2c2c2c; }
+  .cat-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-family: system-ui, sans-serif; font-weight: 600;
+    background: #f0ede6; color: #6d6d6d; vertical-align: middle; margin-left: 6px;
+  }
+
   .item {
     padding: 16px 0; border-bottom: 1px solid #e8e5e0;
     cursor: pointer; transition: background 0.15s;
