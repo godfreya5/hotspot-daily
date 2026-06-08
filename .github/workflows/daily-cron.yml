@@ -25,16 +25,34 @@ jobs:
 
       - run: npm install
 
-      - name: Wait for TrendRadar MCP
+      - name: Setup TrendRadar config
         run: |
-          for i in $(seq 1 30); do
-            if curl -s http://localhost:3333 > /dev/null 2>&1; then
-              echo "TrendRadar ready"
-              break
-            fi
-            echo "Waiting for TrendRadar... ($i)"
-            sleep 2
-          done
+          docker exec $(docker ps -q -f "ancestor=wantcat/trendradar-mcp") mkdir -p /app/config
+          docker cp config/config.yaml $(docker ps -q -f "ancestor=wantcat/trendradar-mcp"):/app/config/
+          docker cp config/frequency_words.txt $(docker ps -q -f "ancestor=wantcat/trendradar-mcp"):/app/config/
+          echo "TrendRadar config copied"
+
+      - name: Trigger TrendRadar crawl
+        run: |
+          node -e "
+          async function main() {
+            const base = 'http://localhost:3333/mcp';
+            const h = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
+            // Init
+            const init = await fetch(base, { method: 'POST', headers: h, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: { tools: {} }, clientInfo: { name: 'ci', version: '1.0' } } }) });
+            const sid = init.headers.get('mcp-session-id');
+            await init.text();
+            // Notifications
+            await fetch(base, { method: 'POST', headers: { ...h, 'mcp-session-id': sid }, body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) });
+            // Trigger crawl
+            const crawl = await fetch(base, { method: 'POST', headers: { ...h, 'mcp-session-id': sid }, body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'trigger_crawl', arguments: { save_to_local: true } } }) });
+            const text = await crawl.text();
+            console.log('Crawl result:', text.slice(0, 300));
+          }
+          main().catch(e => console.error('Crawl failed (non-fatal):', e.message));
+          "
+          echo "Crawl triggered, waiting for data..."
+          sleep 30
 
       - name: Run aggregation
         env:
