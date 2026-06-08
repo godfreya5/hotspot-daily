@@ -101,9 +101,18 @@
     var catLabel = item.categoryLabel || '';
     var catBadge = catLabel ? '<span class="cat-badge" data-cat="' + esc(item.category || '') + '">' + esc(catLabel) + '</span>' : '';
 
+    // Detect if title is primarily English (no CJK characters)
+    var hasCJK = /[一-鿿㐀-䶿]/.test(item.title);
+    var enBadge = !hasCJK ? ' <span style="font-size:11px;color:#8a8a8a;font-weight:400">[EN] <a href="https://translate.google.com/?sl=en&tl=zh-CN&text=' + encodeURIComponent(item.title) + '" target="_blank" rel="noopener" style="color:#8a8a8a;text-decoration:underline">译</a></span>' : '';
+
+    var titleHtml = '<a href="' + escUrl(item.url) + '" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">' +
+      esc(item.title) + enBadge + '</a>';
+    var titleEnHtml = item.title_en ? '<div style="font-size:13px;color:#8a8a8a;margin-top:2px">' + esc(item.title_en) + '</div>' : '';
+
     return '<article class="item" data-category="' + esc(item.category || 'other') + '">' +
       renderTierBadge(item.sourceTier, item.sourceName) + ' ' + catBadge +
-      '<h3 class="title">' + esc(item.title) + '</h3>' +
+      '<h3 class="title">' + titleHtml + '</h3>' +
+      titleEnHtml +
       '<div class="meta">' + crossPlatform + ' · ' + esc(fmtTime(item.publishedAt)) + crossLinks + '</div>' +
       (item.summary ? '<p class="summary">' + esc(item.summary) + '</p>' : '') +
       warning +
