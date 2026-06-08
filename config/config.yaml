@@ -1,0 +1,86 @@
+# TrendRadar Config v6.9.0
+# hotpot-daily — 11 大中文平台热点聚合
+
+# === 应用设置 ===
+app:
+  timezone: Asia/Shanghai
+  show_version_update: false
+  language: zh-CN
+
+# === 报告设置 ===
+report:
+  mode: daily
+  display_mode: keyword
+  rank_threshold: 10
+
+# === 通知设置 ===
+notification:
+  enabled: false
+
+# === 统一调度 ===
+schedule:
+  enabled: true
+  preset: custom
+
+# === 11 大监控平台 ===
+platforms:
+  enabled: true
+  sources:
+    - id: "toutiao"
+      name: "今日头条"
+      enabled: true
+    - id: "baidu"
+      name: "百度热搜"
+      enabled: true
+    - id: "wallstreetcn-hot"
+      name: "华尔街见闻"
+      enabled: true
+    - id: "zhihu"
+      name: "知乎"
+      enabled: true
+    - id: "douyin"
+      name: "抖音"
+      enabled: true
+    - id: "bilibili"
+      name: "B站热搜"
+      enabled: true
+    - id: "weibo"
+      name: "微博"
+      enabled: true
+    - id: "tieba"
+      name: "贴吧"
+      enabled: true
+    - id: "cls"
+      name: "财联社"
+      enabled: true
+    - id: "thepaper"
+      name: "澎湃新闻"
+      enabled: true
+    - id: "ifeng"
+      name: "凤凰网"
+      enabled: true
+
+# === 平台认证（需要时才填写）===
+# 微博: 登录 weibo.com → F12 → Application → Cookies → 复制 SUB cookie
+# 知乎: 登录知乎 → F12 → Application → Cookies → 复制所有 cookie
+platforms_auth:
+  weibo:
+    cookie: ""
+  zhihu:
+    cookie: ""
+
+# === RSS 订阅源（可选）===
+rss:
+  enabled: false
+
+# === 高级设置 ===
+advanced:
+  debug: false
+  crawler:
+    request_interval: 100
+    use_proxy: false
+  weight:
+    rank: 0.6
+    frequency: 0.3
+    hotness: 0.1
+  max_accounts_per_channel: 3

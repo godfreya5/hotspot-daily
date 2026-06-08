@@ -22,24 +22,28 @@ const TIER_MAP = {
   'cnbc.com': 2, 'abcnews.go.com': 2, 'usatoday.com': 2, 'latimes.com': 2,
   'independent.co.uk': 2, 'telegraph.co.uk': 2, 'scmp.com': 2,
   'theregister.com': 2, 'eurekalert.org': 2,
-  // T3: industry blogs / niche outlets
+  'wallstreetcn.com': 2, 'cls.cn': 2, 'ifeng.com': 2,
+  // T3: industry blogs / niche outlets / aggregators
   '36kr.com': 3, 'medium.com': 3, 'dev.to': 3, 'hackernoon.com': 3,
   'thenextweb.com': 3, 'gizmodo.com': 3, 'techradar.com': 3, 'tomshardware.com': 3,
   'venturebeat.com': 3, 'protocol.com': 3, 'thehackernews.com': 3,
   'bleepingcomputer.com': 3, 'schneier.com': 3, 'stratechery.com': 3,
+  // T4: UGC / social media platforms
+  'weibo.com': 4, 'zhihu.com': 4, 'douyin.com': 4, 'bilibili.com': 4,
+  'tieba.baidu.com': 4, 'toutiao.com': 4,
 };
 
 // Category keyword matching (checked against title + summary)
 const CATEGORY_KEYWORDS = {
-  'ai-tech': { label: 'AI/科技', keywords: ['ai', 'artificial intelligence', '人工智能', '大模型', 'llm', 'gpt', 'chatgpt', 'openai', 'claude', 'gemini', 'deepseek', '芯片', '半导体', 'chip', 'gpu', 'nvidia', '英伟达', '量子', 'quantum', '航天', 'spacex', '卫星', 'rocket', '机器人', 'robot', '自动驾驶', '5g', '6g', '华为', 'apple', '苹果', 'google', '谷歌', 'microsoft', '微软', 'meta', 'tesla', '特斯拉', '大语言模型', 'agi', '智能体', 'agent'] },
-  'finance': { label: '财经', keywords: ['股市', 'a股', '港股', '美股', '股票', 'stock', '经济', 'economy', 'gdp', '贸易', 'tariff', '关税', '房地产', '房价', '基金', 'fund', '加密货币', 'bitcoin', 'crypto', '比特币', '央行', '利率', 'ipo', '上市', '融资', 'funding', '收购', 'acquisition', '财报', 'earnings'] },
-  'world': { label: '国际', keywords: ['美国', '俄罗斯', '乌克兰', '北约', 'nato', '欧盟', '日本', '韩国', '中东', '以色列', '伊朗', '朝鲜', '联合国', 'un', '外交', '白宫', 'trump', 'biden', 'putin', '战争', 'war', '军事'] },
-  'sports': { label: '体育', keywords: ['足球', '篮球', 'nba', '世界杯', 'world cup', '奥运会', 'olympics', '欧冠', '英超', '西甲', '法网', '温网', 'f1', '马拉松', '决赛', 'championship'] },
-  'entertainment': { label: '娱乐', keywords: ['明星', '电影', '电视剧', '综艺', '音乐', '演唱会', '票房', 'box office', '奥斯卡', 'oscar', 'netflix', 'disney', '迪士尼', '好莱坞', 'hollywood'] },
-  'health-science': { label: '健康/科学', keywords: ['疫苗', '疫情', '病毒', '疾病', '研究', 'nature', 'science', '论文', 'paper', '科研', '医学', 'cancer', 'climate', '气候', '环保', 'energy', '能源'] },
-  'society': { label: '社会', keywords: ['法律', '法院', '政策', '教育', '高考', '交通', '事故', '灾害', '地震', '火灾', '洪水', '安全', '隐私', 'privacy', '监管', 'regulation'] },
-  'gaming': { label: '游戏', keywords: ['游戏', '电竞', '手游', 'steam', 'ps5', 'xbox', '任天堂', 'nintendo', '原神', '王者荣耀', 'lol', 'esport', 'gaming'] },
-  'auto': { label: '汽车', keywords: ['电动车', '新能源', 'ev', '比亚迪', 'byd', '理想', '蔚来', 'nio', '小鹏', '小米汽车', '特斯拉', 'cybertruck', '电池', 'battery', '充电', 'charging'] },
+  'ai-tech': { label: 'AI/科技', keywords: ['ai', 'artificial intelligence', '人工智能', '大模型', 'llm', 'gpt', 'chatgpt', 'openai', 'claude', 'gemini', 'deepseek', '芯片', '半导体', 'chip', 'gpu', 'nvidia', '英伟达', '量子', 'quantum', '航天', 'spacex', '卫星', 'rocket', '机器人', 'robot', '自动驾驶', '5g', '6g', '华为', 'apple', '苹果', 'google', '谷歌', 'microsoft', '微软', 'meta', 'tesla', '特斯拉', '大语言模型', 'agi', '智能体', 'agent', '数据', '数据库', '算力', '服务器', '光刻', '存储', '海力士', '黄仁勋', '互联网', '软件', '算法', '编程', '开源', 'github', '程序员', '开发者'] },
+  'finance': { label: '财经', keywords: ['股市', 'a股', '港股', '美股', '股票', 'stock', '经济', 'economy', 'gdp', '贸易', 'tariff', '关税', '房地产', '房价', '基金', 'fund', '加密货币', 'bitcoin', 'crypto', '比特币', '央行', '利率', 'ipo', '上市', '融资', 'funding', '收购', 'acquisition', '财报', 'earnings', '加息', '降息', '通胀', '人民币', '美元', '欧元', '日元', '汇率', '债', '银行', '保险', '证券', '涨停', '跌停'] },
+  'world': { label: '国际', keywords: ['美国', '俄罗斯', '乌克兰', '北约', 'nato', '欧盟', '日本', '韩国', '中东', '以色列', '伊朗', '朝鲜', '联合国', 'un', '外交', '白宫', 'trump', 'biden', 'putin', '战争', 'war', '军事', '特朗普', '普京', '中方', '外交部', '回应', '制裁', '冲突', '导弹', '海军', '空军', '陆军', '南海', '台海'] },
+  'sports': { label: '体育', keywords: ['足球', '篮球', 'nba', '世界杯', 'world cup', '奥运会', 'olympics', '欧冠', '英超', '西甲', '法网', '温网', 'f1', '马拉松', '决赛', 'championship', '联赛', '冠军', '球队', '球员', '进球', '教练'] },
+  'entertainment': { label: '娱乐', keywords: ['明星', '电影', '电视剧', '综艺', '音乐', '演唱会', '票房', 'box office', '奥斯卡', 'oscar', 'netflix', 'disney', '迪士尼', '好莱坞', 'hollywood', '演员', '导演', '播出', '上线', '开播'] },
+  'health-science': { label: '健康/科学', keywords: ['疫苗', '疫情', '病毒', '疾病', '研究', 'nature', 'science', '论文', 'paper', '科研', '医学', 'cancer', 'climate', '气候', '环保', 'energy', '能源', '医院', '药物', '治疗', '发现', '科学家', '实验', '基因', '细胞', '地震', '海啸', '台风'] },
+  'society': { label: '社会', keywords: ['法律', '法院', '政策', '教育', '高考', '交通', '事故', '灾害', '火灾', '洪水', '安全', '隐私', 'privacy', '监管', 'regulation', '警方', '公安', '通报', '调查', '处罚', '整改', '出台', '新规', '公告', '通知', '民生', '养老金', '社保', '就业', '毕业', '大学生', '房价', '楼市', '城管'] },
+  'gaming': { label: '游戏', keywords: ['游戏', '电竞', '手游', 'steam', 'ps5', 'xbox', '任天堂', 'nintendo', '原神', '王者荣耀', 'lol', 'esport', 'gaming', '赛季', '皮肤', '新英雄', '副本'] },
+  'auto': { label: '汽车', keywords: ['电动车', '新能源', 'ev', '比亚迪', 'byd', '理想', '蔚来', 'nio', '小鹏', '小米汽车', '特斯拉', 'cybertruck', '电池', 'battery', '充电', 'charging', '车型', '交付', '销量'] },
 };
 
 function classifyCategory(title, summary) {
@@ -157,40 +161,107 @@ async function fetchV2EX() {
 }
 
 async function fetchTrendRadar() {
-  const body = {
-    jsonrpc: '2.0',
-    method: 'tools/call',
-    params: {
-      name: 'search_news',
-      arguments: { query: '', date_range: 'today', limit: 50, include_rss: true }
-    },
-    id: 1
-  };
+  const baseUrl = process.env.TRENDRADAR_URL || 'http://localhost:3333';
+  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
+
   try {
-    const res = await fetch('http://localhost:3333/mcp', {
+    // Step 1: initialize MCP session
+    const initRes = await fetch(`${baseUrl}/mcp`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-03-26',
+          capabilities: { tools: {} },
+          clientInfo: { name: 'hotspot-daily', version: '1.0' },
+        },
+        id: 1,
+      }),
     });
-    const json = await res.json();
-    let rawText = null;
-    if (json.result?.content && json.result.content.length > 0 && json.result.content[0].text) {
-      rawText = json.result.content[0].text;
+    if (!initRes.ok) {
+      console.error(`TrendRadar initialize failed: HTTP ${initRes.status}`);
+      return [];
     }
-    const data = rawText
-      ? JSON.parse(rawText)
-      : (json.result?.data || []);
-    const items = Array.isArray(data) ? data : (data.items || data.data || []);
-    return items.map(d => normalizeItem({
-      id: d.id || d.url || Math.random().toString(36).slice(2, 10),
-      title: d.title,
-      title_en: d.title_en,
-      url: d.url,
-      sourceName: d.sourceName || d.source_name || d.publisher || '',
-      platform: d.platform || d.source || 'unknown',
-      publishedAt: d.publishedAt || d.published_at || d.created_at,
-      summary: d.summary || d.description,
-    }));
+    const sessionId = initRes.headers.get('mcp-session-id');
+    if (!sessionId) {
+      console.error('TrendRadar: no mcp-session-id header in initialize response');
+      return [];
+    }
+    // Consume SSE body
+    await initRes.text();
+
+    // Step 2: send notifications/initialized
+    const callHeaders = { ...headers, 'mcp-session-id': sessionId };
+    await fetch(`${baseUrl}/mcp`, {
+      method: 'POST',
+      headers: callHeaders,
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+    });
+
+    // Step 3: call get_latest_news to fetch today's hot news from all platforms
+    const callRes = await fetch(`${baseUrl}/mcp`, {
+      method: 'POST',
+      headers: callHeaders,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'tools/call',
+        params: {
+          name: 'get_latest_news',
+          arguments: { limit: 200, include_url: true },
+        },
+        id: 2,
+      }),
+    });
+    const bodyText = await callRes.text();
+
+    // Parse SSE response: "event: message\ndata: {...}\n\n"
+    let items = [];
+    for (const line of bodyText.split('\n')) {
+      if (!line.startsWith('data: ')) continue;
+      const jsonStr = line.slice(6); // Strip "data: " prefix
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const text = parsed.result?.content?.[0]?.text;
+        if (text) {
+          const inner = JSON.parse(text);
+          if (inner.success && Array.isArray(inner.data)) {
+            items = inner.data;
+            console.log(`TrendRadar get_latest_news: ${inner.summary?.total || items.length} items from ${inner.summary?.platforms || '?'} platforms`);
+          }
+        }
+      } catch (e) {
+        // Skip non-JSON or malformed lines
+      }
+    }
+
+    if (!items.length) {
+      console.error('TrendRadar: no items returned from get_latest_news');
+      return [];
+    }
+
+    return items.map(d => {
+      const item = {
+        id: `tr-${d.platform}-${d.rank || 0}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title: (d.title || '').slice(0, 120),
+        url: d.url || '',
+        sourceName: d.platform_name || d.platform || '',
+        platform: d.platform || 'unknown',
+        publishedAt: d.timestamp ? new Date(d.timestamp + '+08:00').toISOString() : null,
+        summary: null,
+        sourceTier: null,
+        category: null,
+        categoryLabel: null,
+        crossPlatformCount: 1,
+        crossPlatformUrls: {},
+        traceChain: [],
+      };
+      const { category, categoryLabel } = classifyCategory(item.title, item.summary);
+      item.category = category;
+      item.categoryLabel = categoryLabel;
+      return item;
+    });
   } catch (e) {
     console.error('TrendRadar fetch failed:', e.message);
     return [];
